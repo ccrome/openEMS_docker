@@ -46,6 +46,7 @@ RUN pip install --no-cache-dir --upgrade pip wheel && \
     pip install --no-cache-dir setuptools==58.2.0 && \
     pip install --no-cache-dir numpy matplotlib Cython pyproject-toml h5py
 
+
 # Set the working directory
 WORKDIR /app
 
@@ -79,6 +80,12 @@ RUN git clone --recursive https://github.com/thliebig/openEMS-Project.git && \
 
 # Copy your Python script into the container
 COPY --chown=${USER_ID}:${GROUP_ID} src/Simple_Patch_Antenna.py /app/
+
+RUN pip install --no-cache-dir plotly dash jupyterlab pandas scipy sympy xarray
+RUN pip install --no-cache-dir streamlit
+
+# Create symlink to make python3 the default python
+RUN ln -sf /usr/bin/python3 /usr/bin/python
 
 # Switch to the created user
 USER ${USER_NAME}

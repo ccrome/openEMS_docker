@@ -9,7 +9,7 @@ GROUP_ID = $(shell id -g)
 USER_NAME = $(shell id -un)
 
 # Declare phony targets
-.PHONY: all build run start stop rm rmi clean help
+.PHONY: all build run streamlit start stop rm rmi clean help
 
 # Default target: Build and run the Docker container
 all: build run
@@ -26,8 +26,21 @@ run:
 		-e DISPLAY=$(DISPLAY) \
 		-v "/tmp/.X11-unix:/tmp/.X11-unix" \
 		-v "$(LOCAL_DIR):$(CONTAINER_WORKDIR)" \
+		-p 8501:8501 \
 		-u $(USER_ID):$(GROUP_ID) \
 		$(IMAGE_NAME) bash
+
+# Run Streamlit app in the Docker container
+streamlit:
+	@echo "Running Streamlit app in Docker container $(CONTAINER_NAME)..."
+	docker run -it --rm --name $(CONTAINER_NAME) \
+		-e DISPLAY=$(DISPLAY) \
+		-v "/tmp/.X11-unix:/tmp/.X11-unix" \
+		-v "$(LOCAL_DIR):$(CONTAINER_WORKDIR)" \
+		-p 8501:8501 \
+		-u $(USER_ID):$(GROUP_ID) \
+		-w $(CONTAINER_WORKDIR) \
+		$(IMAGE_NAME) bash -c "cd $(CONTAINER_WORKDIR) && python -m streamlit run $(CONTAINER_WORKDIR)/src/Simple_Patch_Antenna.py --server.port=8501 --server.address=0.0.0.0 --server.headless=true"
 
 # Start the Docker container (if it's stopped)
 # Note: This only works if container was created without --rm flag
@@ -56,12 +69,13 @@ clean: stop rm rmi
 # Show help message
 help:
 	@echo "Available targets:"
-	@echo "  make all     - Build and run the container (default)"
-	@echo "  make build   - Build the Docker image"
-	@echo "  make run     - Run the Docker container"
-	@echo "  make start   - Start a stopped container"
-	@echo "  make stop    - Stop a running container"
-	@echo "  make rm      - Remove the container"
-	@echo "  make rmi     - Remove the image"
-	@echo "  make clean   - Stop, remove container, and remove image"
-	@echo "  make help    - Show this help message"
+	@echo "  make all       - Build and run the container (default)"
+	@echo "  make build     - Build the Docker image"
+	@echo "  make run       - Run the Docker container (interactive bash)"
+	@echo "  make streamlit - Run the Streamlit app (accessible at http://localhost:8501)"
+	@echo "  make start     - Start a stopped container"
+	@echo "  make stop      - Stop a running container"
+	@echo "  make rm        - Remove the container"
+	@echo "  make rmi       - Remove the image"
+	@echo "  make clean     - Stop, remove container, and remove image"
+	@echo "  make help      - Show this help message"
